@@ -104,7 +104,10 @@ class Controller {
     }
 
     async addPlant(req, res) {
-        const { name, type, wateringSchedule, fertilizingSchedule, sunlightRequirement, specialCare, purchaseDate, reminderTime } = req.body;
+        const {
+            name, type, wateringSchedule, fertilizingSchedule,
+            sunlightRequirement, specialCare, purchaseDate, reminderTime
+        } = req.body;
     
         try {
             // Validate reminderTime (time format: HH:mm or HH:mm:ss)
@@ -122,6 +125,19 @@ class Controller {
             // Get userId from the verified token
             const createdBy = req.user.userId;
     
+            let photoData = null;
+    
+            // If a photo is uploaded, convert it to base64 or store its buffer
+            if (req.file && req.file.buffer) {
+                // Convert to base64 (if preferred)
+                photoData = req.file.buffer.toString('base64');
+                
+                // Or you can use binary buffer (uncomment the next line if you want binary)
+                // photoData = req.file.buffer;
+            } else {
+                console.log("No photo uploaded");
+            }
+    
             // Save plant details to Firestore
             const plantRef = db.collection('plants').doc();
             await plantRef.set({
@@ -135,44 +151,12 @@ class Controller {
                 reminderTime, // Store time as a string
                 createdBy, // Add createdBy field
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                photo: photoData, // Store photo data (base64 or binary)
             });
     
-            // Create reminders in Firestore
-            const reminders = [
-                {
-                    heading: 'Water Reminder',
-                    text: `${name} needs to be watered at ${reminderTime}`,
-                    createdBy,
-                    plantId: plantRef.id,
-                },
-                {
-                    heading: 'Special Care Reminder',
-                    text: specialCare ? specialCare : `No special care provided for ${name}.`,
-                    createdBy,
-                    plantId: plantRef.id,
-                },
-                {
-                    heading: 'Sunlight Requirement Reminder',
-                    text: `${name} requires ${sunlightRequirement}`,
-                    createdBy,
-                    plantId: plantRef.id,
-                },
-            ];
-    
-            const reminderBatch = db.batch();
-            const remindersCollection = db.collection('reminders');
-            reminders.forEach((reminder) => {
-                const reminderRef = remindersCollection.doc();
-                reminderBatch.set(reminderRef, {
-                    ...reminder,
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                });
-            });
-    
-            await reminderBatch.commit();
-    
-            res.status(200).send({ message: "Plant and reminders added successfully!", plantId: plantRef.id });
+            res.status(200).send({ message: "Plant added successfully!", plantId: plantRef.id });
         } catch (error) {
+            console.error("Error adding plant:", error);
             res.status(500).send({ error: error.message });
         }
     }

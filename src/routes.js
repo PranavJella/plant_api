@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Controller = require('./controller');
 const verifyToken = require('./verify_token');
-const upload = require('./upload');
+const multer = require('multer');
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage });
 
 router.post('/auth/register', Controller.register);
 router.post('/auth/login', Controller.login);
