@@ -229,6 +229,35 @@ class Controller {
             res.status(500).send({ error: error.message });
         }
     }
+
+    async getAllRemainders(req, res) {
+        const user = req.user;
+    
+        try {
+            // Check if the user has added any plants
+            const plantsSnapshot = await db
+                .collection('plants')
+                .where('createdBy', '==', user.id)
+                .get();
+    
+            if (plantsSnapshot.empty) {
+                // If no plants are found for the user
+                return res.status(200).send({ message: "No plants added yet. No reminders to show." });
+            }
+    
+            // If the user has plants, fetch reminders
+            const remaindersSnapshot = await db.collection('allReminders').get();
+    
+            const remainders = remaindersSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+    
+            res.status(200).send({ remainders });
+        } catch (error) {
+            res.status(500).send({ error: error.message });
+        }
+    }
     
     
     
