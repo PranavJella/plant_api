@@ -18,6 +18,6 @@ app.get('/', (req, res) => {
     res.send('Hello Node API');
 })
 
-app.listen(5000, '0.0.0.0', () => {
+app.listen(3000, '0.0.0.0', () => {
     console.log(`Node API is running on port 3000`)
 })
